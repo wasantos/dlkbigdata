@@ -1,33 +1,42 @@
 pipeline{
-    agent { label 'slave-local' }
+    agent { label 'slave_local' }
         stages{     
             stage('Clean Workspace'){
             steps{
-                sh 'echo -e "\033[0;34m## Limpando o Workspace ##\033[0m"'
+                sh 'echo -e "## Limpando o Workspace ##"'
                 deleteDir()
             }
         }
 
-        stage('SCM - GitHub'){
+        stage('SCM GitHub - Checkout'){
             steps{
                 dir('projeto'){
-                    sh 'echo -e "\033[0;34m ## Innersource Checkout ##\033[0m"'
+                    sh 'echo -e "## SCM GitHub - Checkout ##"'
                     git branch: 'master',
-                    credentialsId: '9a54ae94-57c6-46ae-9ce0-4974a758182d',
-                    url: 'https://github.com/wasantos/DataLake.git'
+                    credentialsId: 'd319fe2f-a4b7-4e8c-8b30-2803211f33c4',
+                    url: 'https://github.com/wasantos/dlkbigdata.git'
                 }
             }  
         }
+        
 
-        stage('Build Datalake'){
+        stage('Find directory to build'){
             steps{
                 dir('projeto'){
-                    sh 'echo -e "\033[0;34m ## Build Datalake ##\033[0m"'
-                    sh 'source /home/centos/.bashrc'
-                    sh 'cd datalake'
+                    sh 'echo -e "## Find directory to build ##"'
                     sh 'pwd'
-                    sh '/usr/bin/python3.6 --version'
-                    sh '/usr/bin/python3.6 build.py'
+                    sh 'tree'
+                }
+            }
+        }
+        
+
+        stage('Build Dlkbigdata - dl-scala'){
+            steps{
+                dir('projeto/dl-scala'){
+                    sh 'echo -e "## Build dl-scala ##"'
+                    sh 'pwd'
+                    sh 'sbt clean assembly'
                 }
             }
         }
