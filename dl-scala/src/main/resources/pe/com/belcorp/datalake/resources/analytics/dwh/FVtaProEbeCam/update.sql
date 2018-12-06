@@ -33,13 +33,12 @@ SELECT
   CAST(planit_dcostoproductocampana.COSTOREPOSICIONMN AS DECIMAL(15,5)),
   CAST(planit_fnumpedcam.REALTC AS DECIMAL(15,5)),
   CAST(planit_fnumpedcam.ESTTC AS DECIMAL(15,5)),
-  CAST(sicc_fvtaproebecam.CANALINGRESO AS INTEGER),
+  sicc_fvtaproebecam.CANALINGRESO,
   sicc_fvtaproebecam.PT_COUNTRY,
   sicc_fvtaproebecam.CODPRODUCTO,
   sicc_fvtaproebecam.CODIGOPALANCA,
   digital_dorigenpedidoweb.DESORIGENPEDIDOWEB,
-  COALESCE(sicc_fvtaproebecam.ANIOCAMPANAREF, sicc_fvtaproebecam.ANIOCAMPANA) AS ANIOCAMPANAREF,
-  NULL AS MEDIOVENTA
+  COALESCE(sicc_fvtaproebecam.ANIOCAMPANAREF, sicc_fvtaproebecam.ANIOCAMPANA) AS ANIOCAMPANAREF
 FROM
   ?landingSchema.tbpq_sicc_fvtaproebecam sicc_fvtaproebecam
     LEFT JOIN ?landingSchema.tbpq_planit_dcostoproductocampana planit_dcostoproductocampana
@@ -50,7 +49,7 @@ FROM
       ON sicc_fvtaproebecam.ANIOCAMPANA = planit_fnumpedcam.ANIOCAMPANA
       AND sicc_fvtaproebecam.PT_COUNTRY = planit_fnumpedcam.PT_COUNTRY
     LEFT JOIN ?landingSchema.tbpq_digital_dorigenpedidoweb digital_dorigenpedidoweb
-      ON sicc_fvtaproebecam.CANALINGRESO = digital_dorigenpedidoweb.CODORIGENPEDIDOWEB
+      ON sicc_fvtaproebecam.CODIGOPALANCA = digital_dorigenpedidoweb.CODORIGENPEDIDOWEB
       AND sicc_fvtaproebecam.PT_COUNTRY = digital_dorigenpedidoweb.PT_COUNTRY
     LEFT JOIN ?landingSchema.tbpq_sicc_dmatrizcampana sicc_dmatrizcampana
       ON (COALESCE(sicc_fvtaproebecam.ANIOCAMPANAREF, sicc_fvtaproebecam.ANIOCAMPANA) =

@@ -1,8 +1,8 @@
 package pe.com.belcorp.datalake.raw.datasets.systems
 
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import pe.com.belcorp.datalake.utils.Params
 import pe.com.belcorp.datalake.raw.datasets.{Interface, System}
-import pe.com.belcorp.datalake.raw.datasets.interfaces.TStaEbeCam
 
 /**
   * Class representing the SICC system
@@ -12,13 +12,12 @@ final class Sicc(val params: Params) extends System {
 
   override val name = "sicc"
   override val glueSchemaSource: String = params.glueLandingDatabase.getOrElse("landing")
-  override val glueSchemaTarget: String = params.glueLandingDatabase.getOrElse("staging")
+  override val glueSchemaTarget: String = params.glueStagingDatabase.getOrElse("work")
   override val redshiftSchema: String = "lan_analitico"
 
   override def interfaces: Seq[Interface] = Seq(
     interface("dcampcer", MERGE,
-      keyColumns = Seq("pt_country", "aniocampana"),
-      partitionColumns = Seq("pt_country", "aniocampana")
+      keyColumns = Seq("pt_country", "aniocampana")
     ),
 
     interface("dgeografia", MERGE,
@@ -87,7 +86,8 @@ final class Sicc(val params: Params) extends System {
     interface("dstatusf", MERGE,
       keyColumns = Seq("pt_country", "aniocampana", "codregion", "codzona"),
       partitionColumns = Seq("pt_country", "aniocampana"),
-      campaignColumn = "aniocampana"
+      campaignColumn = "aniocampana",
+      circuitBreaker = checkCampaignEnd
     ),
 
     interface("dtiempoactividadzona", MERGE,
@@ -111,4 +111,8 @@ final class Sicc(val params: Params) extends System {
       campaignColumn = "aniocampana"
     )
   )
+
+  private def checkCampaignEnd(spark: SparkSession, params: Params, df: DataFrame): Boolean = {
+    df.where("trim(upper(aniocampana)) != 'XXXXXX'").count() < 1
+  }
 }

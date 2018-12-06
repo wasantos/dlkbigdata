@@ -1,6 +1,6 @@
 package pe.com.belcorp.datalake.raw.datasets
 
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import pe.com.belcorp.datalake.raw.datasets.impl.{DefaultInterfaceImpl, DefaultRedshiftWritersImpl}
 import pe.com.belcorp.datalake.raw.datasets.systems._
 import pe.com.belcorp.datalake.utils.Params
@@ -36,6 +36,13 @@ trait System {
   def interfaces: Seq[Interface]
 
   /**
+    * Interface map for easier access
+    */
+  def interfaceMap: Map[String, Interface] = {
+    interfaces.map(itf => itf.name -> itf).toMap
+  }
+
+  /**
     * Convenience method for creating a new child interface for the system
     * @param name name for the interface
     * @param redshiftWriter a function which writes the interface into Redshift,
@@ -47,20 +54,22 @@ trait System {
     * @param parquetPrefix prefix for all Parquet tables
     * @return a fully configured interface
     */
-  final protected def interface(name: String,
-                                redshiftWriter: (Interface, SparkSession, Params) => Unit,
-                                keyColumns: Seq[String] = Seq.empty,
-                                partitionColumns: Seq[String] = Seq.empty,
-                                campaignColumn: String = null,
-                                glueSchemaSource: String = this.glueSchemaSource,
-                                glueSchemaTarget: String = this.glueSchemaTarget,
-                                redshiftSchema: String = this.redshiftSchema,
-                                csvPrefix: String = "",
-                                parquetPrefix: String = "tbpq_"): Interface = {
+  final protected def interface(
+    name: String,
+    redshiftWriter: (Interface, SparkSession, Params) => Unit,
+    keyColumns: Seq[String] = Seq.empty,
+    partitionColumns: Seq[String] = Seq.empty,
+    campaignColumn: String = null,
+    glueSchemaSource: String = this.glueSchemaSource,
+    glueSchemaTarget: String = this.glueSchemaTarget,
+    redshiftSchema: String = this.redshiftSchema,
+    csvPrefix: String = "",
+    parquetPrefix: String = "",
+    circuitBreaker: (SparkSession, Params, DataFrame) => Boolean = null): Interface = {
 
     new DefaultInterfaceImpl(
       this, name, keyColumns, partitionColumns, Option(campaignColumn), glueSchemaSource, glueSchemaTarget,
-      redshiftSchema, redshiftWriter, csvPrefix, parquetPrefix)
+      redshiftSchema, redshiftWriter, csvPrefix, parquetPrefix, circuitBreaker)
   }
 }
 

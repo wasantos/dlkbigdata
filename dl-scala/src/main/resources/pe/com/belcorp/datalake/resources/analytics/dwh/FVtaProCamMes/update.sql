@@ -22,3 +22,4 @@ SELECT
   PT_COUNTRY
 FROM ?landingSchema.tbpq_planit_fvtaprocammes
 WHERE ANIOCAMPANA IN (:campaign)
+  AND PT_COUNTRY = :country

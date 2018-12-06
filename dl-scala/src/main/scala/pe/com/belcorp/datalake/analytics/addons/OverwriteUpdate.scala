@@ -78,11 +78,11 @@ trait OverwriteUpdate {
     DB.dsl(conn).execute(delete)
   }
 
-  private def generateTempTableName(): String = {
+  protected def generateTempTableName(): String = {
     s"tmp_${UUID.randomUUID().toString.replace('-', '_')}"
   }
 
-  private def executeUpdateTransaction(conn: Connection, params: Params, newData: Name): Unit = {
+  protected def executeUpdateTransaction(conn: Connection, params: Params, newData: Name): Unit = {
     var exc: Exception = null
 
     for(i <- 0 until 5) {

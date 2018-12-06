@@ -1,13 +1,12 @@
 package pe.com.belcorp.datalake.main
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import pe.com.belcorp.datalake.common.CampaignTracking
-import pe.com.belcorp.datalake.raw.datasets.{Interface, System}
+import org.apache.spark.sql.SparkSession
+import pe.com.belcorp.datalake.raw.datasets.{InterfaceFunctional, SystemFunctional}
 import pe.com.belcorp.datalake.utils.Goodies.{logIt, timeIt}
+import pe.com.belcorp.datalake.utils.monitoring.Callback.reportOn
 import pe.com.belcorp.datalake.utils.monitoring.Task
 import pe.com.belcorp.datalake.utils.{DB, Lock, Params, SparkUtils}
 import play.api.libs.json.Json
-import pe.com.belcorp.datalake.utils.monitoring.Callback.reportOn
 
 object LoadOnRedshift {
   def main(args: Array[String]): Unit = {
@@ -23,23 +22,13 @@ object LoadOnRedshift {
         Task.ifMonitoring { t => t.success("LOADING_TO_REDSHIFT") }
 
         if (params.processAll() && params.system.isDefined) {
-          val system = System.fetch(params.system(), params)
+          val system = SystemFunctional.fetch(params.system(), params)
           manageSchema(system.redshiftSchema, manager)
-          val campaignDfs = for (interface <- system.interfaces) yield {
-            loadFor(interface, spark, params)
+
+          for (interface <- system.interfaces) {
+            loadFor(interface, manager, spark, params)
           }
 
-          saveTracking(campaignDfs.flatten, manager, params)
-          Task.ifMonitoring { t => t.success("REDSHIFT_LOADED") }
-        } else if (params.processAll()) {
-          val campaignDfs = for {
-            system <- System.fetchAll(params)
-            interface <- system.interfaces
-          } yield {
-            loadFor(interface, spark, params)
-          }
-
-          saveTracking(campaignDfs.flatten, manager, params)
           Task.ifMonitoring { t => t.success("REDSHIFT_LOADED") }
         }
       }
@@ -56,41 +45,21 @@ object LoadOnRedshift {
     }
   }
 
-  private def loadFor(interface: Interface, spark: SparkSession, params: Params): Option[DataFrame] = {
-    logIt(s"Running ${interface.qualifiedSrcTableName}")
+  private def loadFor(interface: InterfaceFunctional, db: DB, spark: SparkSession, params: Params): Unit = {
+    logIt(s"Running ${interface.qualifiedRedshiftTableName}")
     val ellapsed = timeIt {
-      interface.writeToRedshift(spark, params)
+      interface.updateFunctionalRedshift(spark, db, params)
     }
-    logIt(s"${interface.qualifiedSrcTableName} took ${ellapsed.toLong} ms")
+    logIt(s"${interface.qualifiedRedshiftTableName} took ${ellapsed.toLong} ms")
 
     Task.ifMonitoring { t =>
       t.success("REDSHIFT_INTERFACE_LOADED", Json.obj(
         "ellapsed_ms" -> ellapsed,
         "system" -> interface.system.name,
-        "interface" -> interface.name
+        "interface" -> interface.name,
+        "table" -> interface.qualifiedRedshiftTableName
       ))
     }
-
-    interface.getCampaigns(spark, params)
-  }
-
-  private def saveTracking(campaignDfs: Seq[DataFrame], db: DB, params: Params): Unit = {
-    if (campaignDfs.isEmpty) return
-
-    val ellapsed = timeIt {
-      // Aglutinate campaign data from all tables
-      val union = campaignDfs.reduce((a, b) => a.union(b)).distinct()
-
-      // Create campaign table
-      Lock.acquire("emrCampaignTrackingTable") { _ =>
-        db.checkout { conn => CampaignTracking.create(conn, params) }
-      }
-
-      // Save new campaign data into tracking table
-      CampaignTracking.append(union, params)
-    }
-
-    logIt(s"Saving campaigns took ${ellapsed.toLong} ms")
   }
 
   private def manageSchema(schema: String, db: DB): Unit = {

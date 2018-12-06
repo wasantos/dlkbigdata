@@ -1,29 +1,7 @@
 INSERT INTO ?tableName
-WITH
-  agg_aniocampanaprimerpedidoweb AS (
-    SELECT *
-    FROM (
-      SELECT
-        CODEBELISTA,
-        ANIOCAMPANA,
-        PT_COUNTRY,
-        ROW_NUMBER() OVER(PARTITION BY CODEBELISTA ORDER BY ANIOCAMPANA ASC) AS RK
-      FROM ?landingSchema.tbpq_sicc_dnrodocumento
-      WHERE CANALINGRESO IN ('WEB', 'WMK')
-        AND PT_COUNTRY = :country 
-    ) ordered
-    WHERE RK = 1
-  ),
-  agg_flagcorreovalidado AS (
-    SELECT
-      CODEBELISTA, PT_COUNTRY,
-      CAST(BOOL_OR(CORREOVALIDADO = 1) AS SMALLINT) AS FLAGCORREOVALIDADO
-    FROM ?landingSchema.tbpq_digital_flogingresoportal
-    GROUP BY CODEBELISTA, PT_COUNTRY
-  )
 SELECT
   sicc_debelista.ANIOCAMPANAINGRESO,
-  agg_aniocampanaprimerpedidoweb.ANIOCAMPANA,
+  NULL AS ANIOCAMPANAPRIMERPEDIDO,
   sicc_debelista.ANIOCAMPANAULTIMOPEDIDO,
   sicc_debelista.CODEBELISTA,
   sicc_debelista.DESESTADOCIVIL,
@@ -41,7 +19,7 @@ SELECT
   CAST(sicc_debelista.FLAGDIGITAL AS SMALLINT),
   sicc_debelista.TIPODOCIDENTIDAD,
   sicc_debelista.DOCIDENTIDAD,
-  agg_flagcorreovalidado.FLAGCORREOVALIDADO,
+  NULL AS FLAGCORREOVALIDADO,
   sicc_debelista.DESDIRECCION,
   sicc_debelistadatosadic.CORREOELECTRONICO,
   DATEDIFF(

@@ -54,6 +54,24 @@ object CampaignTracking {
     (Option(finalDf), false)
   }
 
+  def selectCampaign(df: DataFrame, params: Params, campaignColumn: String,
+             system: String, name: String): (Seq[String], Boolean) = {
+    import org.apache.spark.sql.functions._
+
+    val wrongColumn = !df.columns.contains(campaignColumn.toLowerCase)
+
+    if (wrongColumn) {
+      return (Seq.empty, true)
+    }
+
+    val campaigns = df.select(col(campaignColumn))
+      .distinct()
+      .collect()
+      .map(_(0).toString)
+
+    (campaigns, false)
+  }
+
   def append(df: DataFrame, params: Params): Unit = {
     val credentials = AWSCredentials.fetch()
 

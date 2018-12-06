@@ -11,7 +11,7 @@ final class BI(val params: Params) extends System {
 
   override val name = "bi"
   override val glueSchemaSource: String = params.glueLandingDatabase.getOrElse("landing")
-  override val glueSchemaTarget: String = params.glueLandingDatabase.getOrElse("staging")
+  override val glueSchemaTarget: String = params.glueStagingDatabase.getOrElse("work")
   override val redshiftSchema: String = "lan_analitico"
 
   override def interfaces: Seq[Interface] = Seq(
@@ -25,9 +25,10 @@ final class BI(val params: Params) extends System {
       partitionColumns = Seq("pt_country")
     ),
 
-     interface("findsociaemp", MERGE,
+    interface("findsociaemp", MERGE,
       keyColumns = Seq("pt_country", "aniocampana", "codseccion"),
-      partitionColumns = Seq("pt_country", "aniocampana")),
+      partitionColumns = Seq("pt_country", "aniocampana")
+    ),
 
     interface("dcatalogovehiculo", MERGE,
       keyColumns = Seq("pt_country", "codcatalogo"),
@@ -52,9 +53,12 @@ final class BI(val params: Params) extends System {
 
     interface("fresultadopalancas", MERGE,
       keyColumns = Seq("pt_country", "aniocampana", "codebelista", "codpalanca"),
-      partitionColumns = Seq("pt_country", "aniocampana")),
+      partitionColumns = Seq("pt_country", "aniocampana")
+    ),
 
     interface("dpais", MERGE,
-      keyColumns = Seq("codpais"))
+      keyColumns = Seq("codpais")
+    )
+
   )
 }

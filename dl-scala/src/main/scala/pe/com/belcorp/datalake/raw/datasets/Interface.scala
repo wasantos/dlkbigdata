@@ -86,7 +86,7 @@ trait Interface {
     * @param spark a correctly configured SparkSession
     * @param params the parameters for the ingestion
     */
-  def updateLandingParquet(spark: SparkSession, params: Params): Unit
+  def updateStagingParquet(spark: SparkSession, params: Params): Unit
 
   /**
     * Process the interface, writing it to Parquet storage

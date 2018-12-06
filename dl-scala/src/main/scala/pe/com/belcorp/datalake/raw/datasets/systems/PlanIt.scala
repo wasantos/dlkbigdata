@@ -11,7 +11,7 @@ final class PlanIt(val params: Params) extends System {
 
   override val name = "planit"
   override val glueSchemaSource: String = params.glueLandingDatabase.getOrElse("landing")
-  override val glueSchemaTarget: String = params.glueLandingDatabase.getOrElse("staging")
+  override val glueSchemaTarget: String = params.glueStagingDatabase.getOrElse("work")
   override val redshiftSchema: String = "lan_analitico"
 
   override def interfaces: Seq[Interface] = Seq(
