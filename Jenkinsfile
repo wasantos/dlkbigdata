@@ -74,7 +74,6 @@ pipeline{
                     sh 'aws s3 cp *.jar s3://repo-lambda-teste/'
                 }
             }
-        }    
-        
+        }     
     }
 }
