@@ -11,6 +11,8 @@ pipeline{
         stage('SCM GitHub - Checkout'){
             steps{
                 dir('projeto'){
+		    
+		    git branch: 'development',
                     checkout scm
 			sh '''
 		         
