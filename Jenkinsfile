@@ -11,9 +11,9 @@ pipeline{
         stage('SCM GitHub - Checkout'){
             steps{
                 dir('projeto'){
-		    
-		    git branch: 'development',
-                    checkout scm
+		    checkout scm
+		    git branch: 'development'
+                    
 			sh '''
 		         
 			 echo ${BRANCH_NAME} "origem"		
